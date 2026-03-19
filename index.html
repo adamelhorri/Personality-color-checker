@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Process Com · Test de Personnalité</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --orange: #FF7A35;
+    --jaune: #F5C518;
+    --marron: #8B6F47;
+    --rouge: #E63946;
+    --bleu: #2D6BE4;
+    --violet: #7B2D8B;
+    --bg: #0D0D0D;
+    --surface: #161616;
+    --surface2: #1E1E1E;
+    --border: rgba(255,255,255,0.07);
+    --text: #F0EDE8;
+    --text-muted: #888;
+    --radius: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px;
+    background: rgba(13,13,13,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+  }
+  .nav-logo span { color: var(--orange); }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-btn {
+    background: none; border: none; color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+    padding: 6px 14px; border-radius: 20px; cursor: pointer;
+    transition: all 0.2s; letter-spacing: 0.04em;
+  }
+  .nav-btn:hover { color: var(--text); background: var(--surface2); }
+  .nav-btn.active { color: var(--text); background: var(--surface2); }
+
+  /* ── PAGES ── */
+  .page { display: none; min-height: 100vh; padding-top: 70px; position: relative; z-index: 1; }
+  .page.active { display: block; }
+
+  /* ── HERO ── */
+  .hero {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: calc(100vh - 70px);
+    padding: 60px 24px;
+    text-align: center;
+  }
+  .hero-eyebrow {
+    font-size: 0.75rem; letter-spacing: 0.2em; color: var(--orange);
+    text-transform: uppercase; margin-bottom: 24px;
+  }
+  .hero-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    line-height: 1.05;
+    margin-bottom: 20px;
+  }
+  .hero-title em { font-style: italic; color: var(--orange); }
+  .hero-sub {
+    color: var(--text-muted); font-size: 1rem; max-width: 500px;
+    line-height: 1.7; margin-bottom: 48px;
+  }
+  .color-dots {
+    display: flex; gap: 8px; margin-bottom: 48px; justify-content: center;
+  }
+  .color-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .color-dot:nth-child(1) { background: var(--orange); animation-delay: 0s; }
+  .color-dot:nth-child(2) { background: var(--jaune); animation-delay: 0.2s; }
+  .color-dot:nth-child(3) { background: var(--marron); animation-delay: 0.4s; }
+  .color-dot:nth-child(4) { background: var(--rouge); animation-delay: 0.6s; }
+  .color-dot:nth-child(5) { background: var(--bleu); animation-delay: 0.8s; }
+  .color-dot:nth-child(6) { background: var(--violet); animation-delay: 1s; }
+  @keyframes pulse { 0%,100%{opacity:0.4;transform:scale(1)} 50%{opacity:1;transform:scale(1.4)} }
+
+  .btn-primary {
+    background: var(--orange); color: white;
+    border: none; padding: 14px 36px; border-radius: 40px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500;
+    cursor: pointer; letter-spacing: 0.05em;
+    transition: all 0.2s;
+    box-shadow: 0 0 30px rgba(255,122,53,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(255,122,53,0.5); }
+
+  .btn-ghost {
+    background: transparent; color: var(--text-muted);
+    border: 1px solid var(--border); padding: 12px 28px; border-radius: 40px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+    cursor: pointer; letter-spacing: 0.04em; transition: all 0.2s;
+  }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+  /* ── TEST ── */
+  .test-container {
+    max-width: 720px; margin: 0 auto; padding: 40px 24px 80px;
+  }
+  .test-header { margin-bottom: 48px; }
+  .test-progress-bar {
+    width: 100%; height: 2px; background: var(--surface2);
+    border-radius: 2px; margin-bottom: 12px; overflow: hidden;
+  }
+  .test-progress-fill {
+    height: 100%; background: var(--orange);
+    border-radius: 2px; transition: width 0.5s ease;
+  }
+  .test-meta {
+    display: flex; justify-content: space-between;
+    font-size: 0.78rem; color: var(--text-muted); letter-spacing: 0.04em;
+  }
+  .test-section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.6rem; margin-bottom: 8px;
+  }
+  .test-section-sub { color: var(--text-muted); font-size: 0.88rem; line-height: 1.6; }
+
+  .question-block { margin-bottom: 48px; }
+  .question-instruction {
+    font-size: 0.75rem; letter-spacing: 0.15em; color: var(--orange);
+    text-transform: uppercase; margin-bottom: 20px;
+  }
+  .question-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.3rem; margin-bottom: 24px; line-height: 1.4;
+  }
+
+  /* Rank button system */
+  .options-list { display: flex; flex-direction: column; gap: 8px; }
+  .option-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid transparent;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center; gap: 12px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .option-item.ranked { background: rgba(255,255,255,0.02); }
+  .option-text { font-size: 0.88rem; line-height: 1.45; color: var(--text); }
+  .option-symbol { font-size: 1rem; opacity: 0.35; flex-shrink: 0; }
+  .rank-btns { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+  .rank-btn {
+    width: 30px; height: 30px; border-radius: 7px;
+    border: 1.5px solid rgba(255,255,255,0.08);
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; transition: all 0.12s;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Sans', sans-serif; flex-shrink: 0;
+  }
+  .rank-btn:hover:not(.taken) { border-color: rgba(255,255,255,0.25); color: var(--text); transform: translateY(-2px); }
+  .rank-btn.active-1 { background: #22c55e22; border-color: #22c55e; color: #22c55e; transform: scale(1.18); box-shadow: 0 0 8px #22c55e44; }
+  .rank-btn.active-2 { background: #84cc1622; border-color: #84cc16; color: #84cc16; transform: scale(1.18); box-shadow: 0 0 8px #84cc1644; }
+  .rank-btn.active-3 { background: #eab30822; border-color: #eab308; color: #eab308; transform: scale(1.18); box-shadow: 0 0 8px #eab30844; }
+  .rank-btn.active-4 { background: #f9731622; border-color: #f97316; color: #f97316; transform: scale(1.18); box-shadow: 0 0 8px #f9731644; }
+  .rank-btn.active-5 { background: #ef444422; border-color: #ef4444; color: #ef4444; transform: scale(1.18); box-shadow: 0 0 8px #ef444444; }
+  .rank-btn.active-6 { background: #dc262622; border-color: #dc2626; color: #dc2626; transform: scale(1.18); box-shadow: 0 0 8px #dc262644; }
+  .rank-btn.taken { opacity: 0.18; cursor: default; }
+  .rank-legend {
+    display: flex; gap: 4px; margin-bottom: 14px;
+    align-items: center; flex-wrap: wrap;
+  }
+  .rank-legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: var(--text-muted); }
+  .rank-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .ranking-note {
+    font-size: 0.78rem; color: var(--text-muted);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 16px; margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  @media(max-width: 600px) {
+    .option-item { grid-template-columns: 1fr; gap: 8px; }
+    .rank-btns { justify-content: flex-start; }
+    .option-symbol { display: none; }
+  }
+
+  .test-nav { display: flex; justify-content: space-between; margin-top: 48px; }
+
+  /* ── RESULTS ── */
+  .results-container { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+  .results-hero { text-align: center; margin-bottom: 60px; }
+  .results-hero-label { font-size: 0.75rem; letter-spacing: 0.2em; color: var(--orange); text-transform: uppercase; margin-bottom: 16px; }
+  .results-hero-title { font-family: 'DM Serif Display', serif; font-size: clamp(2rem,5vw,3.5rem); line-height: 1.1; margin-bottom: 12px; }
+  .primary-color-badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 10px 22px; border-radius: 40px;
+    font-size: 0.9rem; font-weight: 500; margin-top: 16px;
+  }
+
+  .charts-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    margin-bottom: 40px;
+  }
+  @media(max-width:680px){ .charts-grid { grid-template-columns: 1fr; } }
+
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+  }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-card h3 { font-size: 0.8rem; letter-spacing: 0.12em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 20px; }
+
+  .chart-wrap { position: relative; height: 280px; }
+  .chart-wrap-lg { position: relative; height: 340px; }
+
+  /* COLOR PROFILE BARS */
+  .profile-bars { display: flex; flex-direction: column; gap: 12px; }
+  .profile-bar-row { display: flex; flex-direction: column; gap: 6px; }
+  .profile-bar-header { display: flex; justify-content: space-between; align-items: center; }
+  .profile-bar-name { font-size: 0.82rem; font-weight: 500; }
+  .profile-bar-score { font-size: 0.78rem; color: var(--text-muted); }
+  .profile-bar-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .profile-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+
+  /* PERSONALITY CARDS */
+  .personality-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px; margin-bottom: 40px;
+  }
+  .personality-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+    transition: all 0.3s; cursor: pointer;
+    position: relative; overflow: hidden;
+  }
+  .personality-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .personality-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.15); }
+  .card-rank { font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
+  .card-name { font-family: 'DM Serif Display', serif; font-size: 1.3rem; margin-bottom: 4px; }
+  .card-archetype { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; }
+  .card-score-big { font-size: 2.2rem; font-weight: 600; line-height: 1; margin-bottom: 16px; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .tag {
+    font-size: 0.72rem; padding: 4px 10px; border-radius: 20px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .card-detail { font-size: 0.83rem; line-height: 1.6; color: var(--text-muted); }
+  .card-expanded { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .card-expanded.open { display: block; }
+  .expand-info { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .expand-info-item h5 { font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+  .expand-info-item p { font-size: 0.82rem; line-height: 1.5; }
+
+  /* COMPARE */
+  .compare-container { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+  .compare-header { margin-bottom: 40px; }
+  .compare-header h1 { font-family: 'DM Serif Display', serif; font-size: 2rem; margin-bottom: 8px; }
+  .compare-header p { color: var(--text-muted); font-size: 0.9rem; }
+
+  .user-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+  .user-entry {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 20px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .user-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 0.85rem; flex-shrink: 0;
+  }
+  .user-name { font-weight: 500; font-size: 0.9rem; }
+  .user-primary { font-size: 0.78rem; color: var(--text-muted); }
+  .user-mini-bars { display: flex; gap: 3px; margin-left: auto; align-items: flex-end; }
+  .mini-bar { width: 8px; border-radius: 2px; min-height: 4px; }
+
+  .add-user-form {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 24px;
+  }
+  .add-user-form h3 { font-size: 0.8rem; letter-spacing: 0.12em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 16px; }
+  .form-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .form-input {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 16px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+    outline: none; flex: 1; min-width: 140px;
+  }
+  .form-input:focus { border-color: var(--orange); }
+  .form-input::placeholder { color: var(--text-muted); }
+
+  .compare-chart-wrap { position: relative; height: 400px; }
+
+  /* COURS */
+  .cours-container { max-width: 800px; margin: 0 auto; padding: 40px 24px 80px; }
+  .cours-header { margin-bottom: 48px; }
+  .cours-header h1 { font-family: 'DM Serif Display', serif; font-size: 2.2rem; margin-bottom: 8px; }
+  .cours-header p { color: var(--text-muted); font-size: 0.9rem; }
+
+  .profile-section {
+    margin-bottom: 32px; border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .profile-section-header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px 24px; cursor: pointer; transition: background 0.2s;
+  }
+  .profile-section-header:hover { background: rgba(255,255,255,0.02); }
+  .profile-color-pill {
+    width: 12px; height: 40px; border-radius: 6px; flex-shrink: 0;
+  }
+  .profile-section-title { font-family: 'DM Serif Display', serif; font-size: 1.4rem; }
+  .profile-section-sub { font-size: 0.82rem; color: var(--text-muted); }
+  .profile-section-chevron { margin-left: auto; color: var(--text-muted); transition: transform 0.3s; font-size: 0.8rem; }
+  .profile-section-chevron.open { transform: rotate(180deg); }
+  .profile-section-body {
+    display: none; padding: 0 24px 24px;
+    border-top: 1px solid var(--border);
+  }
+  .profile-section-body.open { display: block; padding-top: 20px; }
+
+  .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px; }
+  @media(max-width:540px){ .info-grid { grid-template-columns: 1fr; } }
+  .info-block h5 { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+  .info-block p { font-size: 0.88rem; line-height: 1.6; }
+
+  .driver-chip {
+    display: inline-block; padding: 6px 16px; border-radius: 20px;
+    font-size: 0.8rem; font-weight: 500; margin-right: 8px; margin-bottom: 8px;
+  }
+
+  /* ANIM */
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  .fade-up { animation: fadeUp 0.5s ease forwards; }
+  .delay-1 { animation-delay: 0.1s; opacity: 0; }
+  .delay-2 { animation-delay: 0.2s; opacity: 0; }
+  .delay-3 { animation-delay: 0.3s; opacity: 0; }
+  .delay-4 { animation-delay: 0.4s; opacity: 0; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center; padding: 80px 24px;
+    color: var(--text-muted);
+  }
+  .empty-state-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.3; }
+  .empty-state h3 { font-family: 'DM Serif Display', serif; font-size: 1.4rem; margin-bottom: 8px; color: var(--text); }
+  .empty-state p { font-size: 0.88rem; line-height: 1.6; max-width: 360px; margin: 0 auto 24px; }
+
+  .section-divider {
+    border: none; border-top: 1px solid var(--border); margin: 40px 0;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Process<span>Com</span></div>
+  <div class="nav-links">
+    <button class="nav-btn active" onclick="showPage('home')">Accueil</button>
+    <button class="nav-btn" onclick="showPage('test')">Test</button>
+    <button class="nav-btn" onclick="showPage('results')">Résultats</button>
+    <button class="nav-btn" onclick="showPage('compare')">Comparer</button>
+    <button class="nav-btn" onclick="showPage('cours')">Profils</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <p class="hero-eyebrow fade-up">Process Communication Model</p>
+    <h1 class="hero-title fade-up delay-1">Découvre ta <em>vraie</em><br>personnalité</h1>
+    <p class="hero-sub fade-up delay-2">6 profils. 7 questions. Un miroir précis de comment tu communiques, ce dont tu as besoin, et ce qui te fait vibrer.</p>
+    <div class="color-dots">
+      <div class="color-dot"></div>
+      <div class="color-dot"></div>
+      <div class="color-dot"></div>
+      <div class="color-dot"></div>
+      <div class="color-dot"></div>
+      <div class="color-dot"></div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+      <button class="btn-primary" onclick="startTest()">Commencer le test →</button>
+      <button class="btn-ghost" onclick="showPage('cours')">Explorer les profils</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEST -->
+<div id="page-test" class="page">
+  <div class="test-container">
+    <div class="test-header">
+      <div class="test-progress-bar">
+        <div class="test-progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+      <div class="test-meta">
+        <span id="progress-label">Question 1 / 7</span>
+        <span id="progress-pct">0%</span>
+      </div>
+    </div>
+    <div id="test-content"></div>
+    <div class="test-nav">
+      <button class="btn-ghost" id="btn-prev" onclick="prevSection()" style="visibility:hidden">← Retour</button>
+      <button class="btn-primary" id="btn-next" onclick="nextSection()">Suivant →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="page-results" class="page">
+  <div class="results-container">
+    <div id="results-content">
+      <div class="empty-state">
+        <div class="empty-state-icon">◑</div>
+        <h3>Pas encore de résultats</h3>
+        <p>Complète le test pour découvrir ton profil de personnalité complet.</p>
+        <button class="btn-primary" onclick="startTest()">Faire le test →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARE -->
+<div id="page-compare" class="page">
+  <div class="compare-container">
+    <div class="compare-header">
+      <h1>Comparer les profils</h1>
+      <p>Visualise les personnalités de ton groupe côte à côte</p>
+    </div>
+
+    <div class="add-user-form">
+      <h3>Ajouter un profil</h3>
+      <div class="form-row">
+        <input class="form-input" id="cmp-name" placeholder="Prénom" style="max-width:180px">
+        <input class="form-input" id="cmp-orange" type="number" min="0" max="100" placeholder="☆ Orange" style="max-width:130px">
+        <input class="form-input" id="cmp-jaune"  type="number" min="0" max="100" placeholder="☽ Jaune" style="max-width:130px">
+        <input class="form-input" id="cmp-marron" type="number" min="0" max="100" placeholder="□ Marron" style="max-width:130px">
+        <input class="form-input" id="cmp-rouge"  type="number" min="0" max="100" placeholder="○ Rouge" style="max-width:130px">
+        <input class="form-input" id="cmp-bleu"   type="number" min="0" max="100" placeholder="△ Bleu" style="max-width:130px">
+        <input class="form-input" id="cmp-violet" type="number" min="0" max="100" placeholder="✚ Violet" style="max-width:130px">
+        <button class="btn-primary" onclick="addCompareUser()" style="white-space:nowrap">Ajouter</button>
+      </div>
+    </div>
+
+    <div id="compare-users-list" class="user-list"></div>
+    <div id="compare-chart-section" style="display:none">
+      <div class="chart-card">
+        <h3>Comparaison des profils</h3>
+        <div class="compare-chart-wrap"><canvas id="compareChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COURS -->
+<div id="page-cours" class="page">
+  <div class="cours-container">
+    <div class="cours-header">
+      <h1>Les 6 Profils</h1>
+      <p>Comprends chaque archétype en profondeur — forces, besoins, drivers et signaux de stress</p>
+    </div>
+    <div id="cours-content"></div>
+  </div>
+</div>
+
+<script>
+// ────────────────────────────────────────────────────────────
+// DATA
+// ────────────────────────────────────────────────────────────
+const PROFILES = {
+  orange: {
+    name: 'Orange', emoji: '☆', archetype: 'Empathique',
+    color: '#FF7A35',
+    traits: ['Chaleureux', 'Attentionné', 'Altruiste', 'Généreux'],
+    besoin: 'Être reconnu pour lui/elle-même, être aimé',
+    driver: 'FAIS PLAISIR !',
+    stress: 'Faire trop, chercher à plaire à tout le monde, s\'oublier',
+    description: 'Tu ressens les choses en premier. Tes relations sont guidées par l\'émotion et l\'empathie. Tu te sur-adaptes parfois pour ne pas déplaire.',
+    detail: 'Tu as une capacité rare à créer des liens authentiques et à rendre chacun à l\'aise. Ton besoin de reconnaissance émotionnelle est ton moteur principal.',
+    communication: 'Chaleureux, expressif, centré sur la relation',
+    equipe: 'Tu t\'assures que tout le monde se sent bien et que le groupe est soudé',
+    soiree: 'Tu cherches à ce que chacun se sente bienvenu, tu crées des liens',
+  },
+  jaune: {
+    name: 'Jaune', emoji: '☽', archetype: 'Rebelle · Énergiseur',
+    color: '#F5C518',
+    traits: ['Créatif', 'Spontané', 'Drôle', 'Libre', 'Fun'],
+    besoin: 'Relations ludiques, liberté, nouveauté',
+    driver: 'FAIS DES EFFORTS !',
+    stress: 'Râler, souffler, se rebeller contre les contraintes',
+    description: 'Tu adores l\'instant présent et tout ce qui est nouveau. Tu apportes de l\'énergie et de la légèreté partout où tu vas. Les règles rigides t\'étouffent.',
+    detail: 'Tu es le moteur créatif du groupe. Ton énergie est contagieuse et tu sais comment rendre n\'importe quelle situation plus fun. Tu as besoin de variété.',
+    communication: 'Direct, spontané, expressif — joie et dégoût très visibles',
+    equipe: 'Tu injectes de la créativité et de la légèreté pour maintenir la motivation',
+    soiree: 'Tu fais des blagues, tu taquines, tu rends la soirée plus amusante',
+  },
+  marron: {
+    name: 'Marron', emoji: '□', archetype: 'Rêveur · Imaginatif',
+    color: '#8B6F47',
+    traits: ['Posé', 'Calme', 'Réfléchi', 'Imaginatif', 'Autonome'],
+    besoin: 'Silence, calme, sa bulle, indépendance',
+    driver: 'SOIS FORT ! → Passivité',
+    stress: 'Se renferme, attend que ça passe, a besoin d\'être guidé directement',
+    description: 'Tu as une vie intérieure riche. Tu as besoin de silence et d\'espace pour te ressourcer. Tu penses beaucoup avant d\'agir — et c\'est une force.',
+    detail: 'Tu observes, tu analyses, tu imagines. Ta force est dans la profondeur de ta réflexion. Tu travailles bien seul et tu as besoin qu\'on te laisse de l\'espace.',
+    communication: 'Factuel, concret, peu d\'échanges émotionnels — tu exprimes rarement tes sentiments',
+    equipe: 'Tu analyses les situations et proposes des idées réfléchies',
+    soiree: 'Tu trouves un coin tranquille, tu observes et tu participes si on t\'invite',
+  },
+  rouge: {
+    name: 'Rouge', emoji: '○', archetype: 'Promoteur · Acteur',
+    color: '#E63946',
+    traits: ['Actif', 'Charismatique', 'Individualiste', 'Direct', 'Audacieux'],
+    besoin: 'Excitation, challenges, compétition, vibrer',
+    driver: 'SOIS FORT !',
+    stress: 'Zizanie, conflits, manipulation',
+    description: 'Tu es fait pour l\'action. Tu OSes. Avec un objectif tu es charmeur, sans objectif tu ne prends pas de gants. Tu es indépendant et tu fonces.',
+    detail: 'Tu es à l\'aise dans les situations de pression. Tu aimes gagner et tu es prêt à prendre des risques. Tu as besoin de challenges pour rester motivé.',
+    communication: 'Orienté action, direct, peu intéressé par les échanges "inutiles"',
+    equipe: 'Tu encourages l\'équipe à passer à l\'action rapidement et efficacement',
+    soiree: 'Tu es au centre de l\'attention, tu proposes des jeux, tu animes',
+  },
+  bleu: {
+    name: 'Bleu', emoji: '△', archetype: 'Travaillant · Rationnel',
+    color: '#2D6BE4',
+    traits: ['Logique', 'Organisé', 'Responsable', 'Précis', 'Ponctuel'],
+    besoin: 'Être reconnu pour son travail, respect des délais',
+    driver: 'SOIS PARFAIT !',
+    stress: 'Sur-contrôle, tatillonnage, perfectionnisme paralysant',
+    description: 'Tu penses, donc tu es. Tu aimes les faits, la cohérence et la structure. Tu travailles bien et tu attends que les autres fassent de même.',
+    detail: 'Tu es le pilier organisationnel. Tu analyses les données, tu planifies et tu exécutes avec précision. Tu as du mal à déléguer ce que tu pourrais faire mieux.',
+    communication: 'Basé sur les faits et les informations concrètes et utiles',
+    equipe: 'Tu organises les tâches et t\'assures que les objectifs soient atteints',
+    soiree: 'Tu participes à des conversations structurées, tu te rends utile',
+  },
+  violet: {
+    name: 'Violet', emoji: '✚', archetype: 'Persévérant · Engagé',
+    color: '#7B2D8B',
+    traits: ['Loyal', 'Engagé', 'Sincère', 'Convaincu', 'Autoritaire'],
+    besoin: 'Être reconnu pour ses opinions, être écouté',
+    driver: 'SOIS PARFAIT !',
+    stress: 'Moralisateur, donneur de leçons, prise à partie',
+    description: 'Tes valeurs sont ta boussole. Tu es loyal, engagé et tu défends ce en quoi tu crois avec conviction. Tu peux être perçu comme autoritaire.',
+    detail: 'Tu as une forte intégrité et tu tiens tes engagements. Tu attends la même chose des autres. Tu es le garant des valeurs et de l\'éthique du groupe.',
+    communication: 'Orienté valeurs, jugement facile, peut être perçu comme autoritaire',
+    equipe: 'Tu veilles à ce que les décisions soient prises de manière juste et équitable',
+    soiree: 'Tu cherches des conversations profondes où tu peux exprimer tes valeurs',
+  }
+};
+
+const QUESTIONS = [
+  {
+    id: 'q1',
+    title: 'Quels sont vos points forts ?',
+    instruction: 'Classez de 1 (peu vous) à 6 (tout à fait vous)',
+    options: [
+      { text: 'Compatissant, sensible et chaleureux', code: 'orange' },
+      { text: 'Logique, responsable et organisé', code: 'bleu' },
+      { text: 'Engagé, observateur, consciencieux', code: 'violet' },
+      { text: 'Adaptable, persuasif et charmeur', code: 'rouge' },
+      { text: 'Réfléchi, imaginatif, calme', code: 'marron' },
+      { text: 'Spontané, créatif, drôle', code: 'jaune' },
+    ]
+  },
+  {
+    id: 'q2',
+    title: 'Pour vous sentir bien, vous avez besoin…',
+    instruction: 'Classez de 1 (peu vous) à 6 (tout à fait vous)',
+    options: [
+      { text: 'De silence et de calme', code: 'marron' },
+      { text: 'D\'être reconnu pour votre travail', code: 'bleu' },
+      { text: 'D\'être reconnu pour vos idées', code: 'violet' },
+      { text: 'De vous amuser en toutes occasions', code: 'jaune' },
+      { text: 'D\'excitation et de challenges', code: 'rouge' },
+      { text: 'De vous sentir apprécié', code: 'orange' },
+    ]
+  },
+  {
+    id: 'q3',
+    title: 'Vos caractéristiques',
+    instruction: 'Classez de 1 (peu vous) à 6 (tout à fait vous)',
+    options: [
+      { text: 'Doué pour l\'introspection, j\'aime les tâches concrètes et j\'ai une bonne habileté manuelle.', code: 'marron' },
+      { text: '"Je pense donc je suis." J\'apprécie la cohérence et prône l\'intelligence.', code: 'bleu' },
+      { text: '"Carpe diem." J\'aime jouer et profiter de l\'instant présent.', code: 'jaune' },
+      { text: 'Je sais être ferme et direct. J\'ai confiance en moi et je m\'affirme.', code: 'rouge' },
+      { text: 'Je formule souvent mes opinions et j\'ai du mal à être contredit.', code: 'violet' },
+      { text: 'Je suis doué pour l\'harmonie, je donne facilement mais j\'ai du mal à dire non.', code: 'orange' },
+    ]
+  },
+  {
+    id: 'q4',
+    title: 'Comment exprimez-vous vos ressentis ?',
+    instruction: 'Classez de 1 (peu vous) à 6 (tout à fait vous)',
+    options: [
+      { text: 'C\'est rare, exprimer ses sentiments c\'est un signe de faiblesse.', code: 'rouge' },
+      { text: 'C\'est facile, c\'est même très utile pour se faire comprendre.', code: 'orange' },
+      { text: 'C\'est souvent facile et très spontané ! Les gens autour de moi savent toujours ce que je ressens.', code: 'jaune' },
+      { text: 'Exprimer ses sentiments c\'est inutile — je suis tranquille avec ça, je ressens peu d\'émotions.', code: 'marron' },
+      { text: 'Mon humeur est très stable. Je me mets rarement en colère et je ris difficilement.', code: 'bleu' },
+      { text: 'Je cache ma sensibilité mais l\'émotion la plus courante chez moi est la colère.', code: 'violet' },
+    ]
+  },
+  {
+    id: 'q5',
+    title: 'Vous êtes invité·e à une soirée, que faites-vous ?',
+    instruction: 'Classez de 1 (peu vous) à 6 (tout à fait vous)',
+    options: [
+      { text: 'Je trouve un endroit tranquille, je me détends et j\'observe. Je participe si on m\'invite.', code: 'marron' },
+      { text: 'Je cherche des conversations profondes où je peux exprimer mes valeurs.', code: 'violet' },
+      { text: 'Je suis à l\'aise au centre de l\'attention, je propose des jeux pour animer la soirée.', code: 'rouge' },
+      { text: 'Je m\'assure que chacun se sente bienvenu, je crée des liens.', code: 'orange' },
+      { text: 'Je suis là pour rire ! Je fais des blagues et je rends la soirée plus amusante.', code: 'jaune' },
+      { text: 'Je me rends utile, j\'aide à organiser ou je prends part à des conversations intéressantes.', code: 'bleu' },
+    ]
+  },
+  {
+    id: 'q6',
+    title: 'Comment sont vos interactions ?',
+    instruction: 'Classez de 1 (peu vous) à 6 (tout à fait vous)',
+    options: [
+      { text: 'Je ressens les gens et les ambiances en premier. Je me sur-adapte pour ne pas déplaire.', code: 'orange' },
+      { text: 'Je suis réactif ! Si quelqu\'un ne me plaît pas, il le saura. J\'adore ou je déteste.', code: 'jaune' },
+      { text: 'Ma communication est basée sur des échanges d\'informations concrètes et utiles.', code: 'bleu' },
+      { text: 'Face à de nouvelles rencontres, je suis en difficulté. J\'attends d\'être sollicité.', code: 'marron' },
+      { text: 'Je suis orienté vers l\'action. Avec un objectif je suis charmeur, sans objectif je suis direct.', code: 'rouge' },
+      { text: 'J\'évalue les gens selon mes opinions, j\'ai le jugement facile, je peux être perçu comme autoritaire.', code: 'violet' },
+    ]
+  },
+  {
+    id: 'q7',
+    title: 'Dans une équipe, quel rôle avez-vous tendance à jouer ?',
+    instruction: 'Classez de 1 (peu vous) à 6 (tout à fait vous)',
+    options: [
+      { text: 'J\'injecte de la créativité et de la légèreté pour maintenir la motivation.', code: 'jaune' },
+      { text: 'Je veille à ce que les décisions soient prises de manière juste et équitable.', code: 'violet' },
+      { text: 'J\'encourage l\'équipe à passer à l\'action rapidement et efficacement.', code: 'rouge' },
+      { text: 'J\'organise les tâches et m\'assure que les objectifs soient atteints.', code: 'bleu' },
+      { text: 'J\'analyse les situations et propose des idées réfléchies.', code: 'marron' },
+      { text: 'Je m\'assure que tout le monde se sente bien et que l\'équipe est soudée.', code: 'orange' },
+    ]
+  }
+];
+
+// ────────────────────────────────────────────────────────────
+// STATE
+// ────────────────────────────────────────────────────────────
+let currentSection = 0;
+let answers = {}; // { qId: { optionIndex: rank } }
+let compareUsers = [];
+let compareChartInstance = null;
+let radarChartInstance = null;
+let barChartInstance = null;
+
+// ────────────────────────────────────────────────────────────
+// NAVIGATION
+// ────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['home','test','results','compare','cours'][i] === name);
+  });
+  if (name === 'cours') buildCours();
+  if (name === 'compare') renderCompareUsers();
+}
+
+// ────────────────────────────────────────────────────────────
+// TEST ENGINE
+// ────────────────────────────────────────────────────────────
+function startTest() {
+  currentSection = 0;
+  answers = {};
+  QUESTIONS.forEach(q => { answers[q.id] = {}; });
+  showPage('test');
+  renderSection();
+}
+
+const RANK_COLORS = ['','#22c55e','#84cc16','#eab308','#f97316','#ef4444','#dc2626'];
+
+function renderSection() {
+  const q = QUESTIONS[currentSection];
+  const total = QUESTIONS.length;
+  const pct = Math.round((currentSection / total) * 100);
+
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `Question ${currentSection + 1} / ${total}`;
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('btn-prev').style.visibility = currentSection > 0 ? 'visible' : 'hidden';
+  document.getElementById('btn-next').textContent = currentSection === total - 1 ? 'Voir mes résultats →' : 'Suivant →';
+
+  const usedRanks = {};
+  Object.entries(answers[q.id]).forEach(([k, v]) => {
+    if (k !== '_order') usedRanks[v] = parseInt(k);
+  });
+  const done = Object.keys(answers[q.id]).filter(k => k !== '_order').length;
+
+  let html = `
+    <div class="question-block fade-up">
+      <p class="question-instruction">${q.instruction}</p>
+      <h2 class="question-title">${q.title}</h2>
+      <div class="ranking-note">
+        Cliquez sur un chiffre pour chaque proposition. Chaque rang ne peut être utilisé qu'une fois. Recliquez pour désélectionner.
+      </div>
+      <div class="rank-legend">
+        <div class="rank-legend-item"><div class="rank-legend-dot" style="background:#22c55e"></div>1 = Pas du tout moi</div>
+        <span style="color:var(--border);padding:0 6px">·</span>
+        <div class="rank-legend-item"><div class="rank-legend-dot" style="background:#eab308"></div>3-4 = Neutre</div>
+        <span style="color:var(--border);padding:0 6px">·</span>
+        <div class="rank-legend-item"><div class="rank-legend-dot" style="background:#dc2626"></div>6 = C'est tout à fait moi</div>
+        <span style="margin-left:auto;font-size:0.75rem;font-weight:500;color:${done===6?'#22c55e':'var(--text-muted)'}">${done}/6 ✓</span>
+      </div>
+      <div class="options-list" id="options-${q.id}">
+  `;
+
+  q.options.forEach((opt, i) => {
+    const myRank = answers[q.id][i] || 0;
+    const p = PROFILES[opt.code];
+    const borderStyle = myRank ? `border-left: 3px solid ${RANK_COLORS[myRank]};` : '';
+
+    let btns = '';
+    for (let r = 1; r <= 6; r++) {
+      const isActive = myRank === r;
+      const takenByOther = usedRanks[r] !== undefined && usedRanks[r] !== i;
+      const cls = isActive ? `active-${r}` : (takenByOther ? 'taken' : '');
+      const handler = takenByOther ? '' : `onclick="setRank('${q.id}',${i},${r})"`;
+      btns += `<button class="rank-btn ${cls}" ${handler}>${r}</button>`;
+    }
+
+    html += `
+      <div class="option-item ${myRank ? 'ranked' : ''}" id="opt-${q.id}-${i}" style="${borderStyle}">
+        <div class="option-text">${opt.text}</div>
+        <div class="option-symbol">${p.emoji}</div>
+        <div class="rank-btns">${btns}</div>
+      </div>
+    `;
+  });
+
+  html += `</div></div>`;
+  document.getElementById('test-content').innerHTML = html;
+}
+
+function setRank(qId, optIdx, rank) {
+  if (answers[qId][optIdx] === rank) {
+    delete answers[qId][optIdx];
+    renderSection();
+    return;
+  }
+  Object.keys(answers[qId]).forEach(k => {
+    if (k !== '_order' && answers[qId][k] === rank) delete answers[qId][k];
+  });
+  answers[qId][optIdx] = rank;
+  renderSection();
+}
+
+function getQuestionComplete(qId) {
+  const vals = Object.entries(answers[qId]).filter(([k]) => k !== '_order').map(([,v]) => v);
+  return vals.length === 6 && new Set(vals).size === 6;
+}
+
+function nextSection() {
+  const q = QUESTIONS[currentSection];
+  if (!getQuestionComplete(q.id)) {
+    // Highlight incomplete
+    const el = document.getElementById('options-' + q.id);
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.outline = '2px solid var(--orange)';
+    el.style.borderRadius = '12px';
+    setTimeout(() => el.style.outline = 'none', 1200);
+    return;
+  }
+  if (currentSection < QUESTIONS.length - 1) {
+    currentSection++;
+    renderSection();
+  } else {
+    computeResults();
+  }
+}
+
+function prevSection() {
+  if (currentSection > 0) { currentSection--; renderSection(); }
+}
+
+// ────────────────────────────────────────────────────────────
+// COMPUTE
+// ────────────────────────────────────────────────────────────
+function computeResults() {
+  const scores = { orange:0, jaune:0, marron:0, rouge:0, bleu:0, violet:0 };
+  QUESTIONS.forEach(q => {
+    q.options.forEach((opt, i) => {
+      const rank = answers[q.id][i] || 0;
+      scores[opt.code] += rank;
+    });
+  });
+  // Normalize to percentage of max possible (6 options × 7 questions × max rank 6 = max 42 per type, but distributed)
+  const total = Object.values(scores).reduce((a,b) => a+b, 0);
+  const pct = {};
+  Object.keys(scores).forEach(k => pct[k] = Math.round((scores[k] / total) * 100));
+
+  showPage('results');
+  renderResults(scores, pct);
+}
+
+// ────────────────────────────────────────────────────────────
+// RESULTS
+// ────────────────────────────────────────────────────────────
+function renderResults(scores, pct) {
+  const sorted = Object.entries(pct).sort((a,b) => b[1]-a[1]);
+  const primary = sorted[0];
+  const primaryProfile = PROFILES[primary[0]];
+
+  // Destroy old charts
+  if (radarChartInstance) { radarChartInstance.destroy(); radarChartInstance = null; }
+  if (barChartInstance) { barChartInstance.destroy(); barChartInstance = null; }
+
+  let html = `
+    <div class="results-hero fade-up">
+      <p class="results-hero-label">Votre profil dominant</p>
+      <h1 class="results-hero-title">${primaryProfile.name}<br><span style="color:${primaryProfile.color}">${primaryProfile.archetype}</span></h1>
+      <p style="color:var(--text-muted);max-width:480px;margin:12px auto 0;font-size:0.9rem;line-height:1.7">${primaryProfile.description}</p>
+      <div class="primary-color-badge" style="background:${primaryProfile.color}20;border:1px solid ${primaryProfile.color}40;margin-top:20px">
+        <span style="color:${primaryProfile.color};font-size:1.2rem">${primaryProfile.emoji}</span>
+        <span style="color:${primaryProfile.color}">${primaryProfile.name} · ${primary[1]}%</span>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card full">
+        <h3>Radar de personnalité</h3>
+        <div class="chart-wrap-lg"><canvas id="radarChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Distribution des profils</h3>
+        <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Intensité par profil</h3>
+        <div class="profile-bars" id="profile-bars-list"></div>
+      </div>
+    </div>
+
+    <h2 style="font-family:'DM Serif Display',serif;font-size:1.4rem;margin-bottom:20px">Tous vos profils</h2>
+    <div class="personality-grid" id="personality-grid"></div>
+  `;
+
+  document.getElementById('results-content').innerHTML = html;
+
+  // Bar chart
+  const labels = sorted.map(([k]) => `${PROFILES[k].emoji} ${PROFILES[k].name}`);
+  const data = sorted.map(([,v]) => v);
+  const colors = sorted.map(([k]) => PROFILES[k].color);
+
+  const ctxBar = document.getElementById('barChart').getContext('2d');
+  barChartInstance = new Chart(ctxBar, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colors.map(c => c + '99'),
+        borderColor: colors,
+        borderWidth: 2,
+        borderRadius: 8,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888', font: { size: 11 } }, max: 40 },
+        x: { grid: { display: false }, ticks: { color: '#ccc', font: { size: 11 } } }
+      }
+    }
+  });
+
+  // Radar
+  const radarLabels = Object.keys(PROFILES).map(k => PROFILES[k].name);
+  const radarData = Object.keys(PROFILES).map(k => pct[k]);
+  const radarColors = Object.keys(PROFILES).map(k => PROFILES[k].color);
+
+  const ctxRadar = document.getElementById('radarChart').getContext('2d');
+  radarChartInstance = new Chart(ctxRadar, {
+    type: 'radar',
+    data: {
+      labels: radarLabels,
+      datasets: [{
+        label: 'Votre profil',
+        data: radarData,
+        backgroundColor: 'rgba(255,122,53,0.15)',
+        borderColor: '#FF7A35',
+        borderWidth: 2.5,
+        pointBackgroundColor: radarColors,
+        pointBorderColor: '#0D0D0D',
+        pointBorderWidth: 2,
+        pointRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          angleLines: { color: 'rgba(255,255,255,0.06)' },
+          pointLabels: { color: '#ccc', font: { size: 12, family: 'DM Sans' } },
+          ticks: { display: false },
+          suggestedMin: 0, suggestedMax: 35,
+        }
+      }
+    }
+  });
+
+  // Profile bars
+  const barsEl = document.getElementById('profile-bars-list');
+  sorted.forEach(([k, v]) => {
+    const p = PROFILES[k];
+    barsEl.innerHTML += `
+      <div class="profile-bar-row">
+        <div class="profile-bar-header">
+          <span class="profile-bar-name" style="color:${p.color}">${p.emoji} ${p.name}</span>
+          <span class="profile-bar-score">${v}%</span>
+        </div>
+        <div class="profile-bar-track">
+          <div class="profile-bar-fill" style="width:${v}%;background:${p.color}"></div>
+        </div>
+      </div>
+    `;
+  });
+
+  // Personality cards
+  const grid = document.getElementById('personality-grid');
+  sorted.forEach(([k, v], idx) => {
+    const p = PROFILES[k];
+    const card = document.createElement('div');
+    card.className = 'personality-card';
+    card.style.cssText = `--card-color:${p.color}`;
+    card.innerHTML = `
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${p.color}"></div>
+      <p class="card-rank">#${idx+1} ${idx===0?'· Profil dominant':''}</p>
+      <h3 class="card-name">${p.emoji} ${p.name}</h3>
+      <p class="card-archetype">${p.archetype}</p>
+      <div class="card-score-big" style="color:${p.color}">${v}%</div>
+      <div class="card-tags">${p.traits.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      <p class="card-detail">${p.detail}</p>
+      <div class="card-expanded" id="exp-${k}">
+        <div class="expand-info">
+          <div class="expand-info-item"><h5>Besoin</h5><p>${p.besoin}</p></div>
+          <div class="expand-info-item"><h5>Driver</h5><p style="color:${p.color};font-weight:500">${p.driver}</p></div>
+          <div class="expand-info-item"><h5>En équipe</h5><p>${p.equipe}</p></div>
+          <div class="expand-info-item"><h5>Stress</h5><p>${p.stress}</p></div>
+        </div>
+      </div>
+      <button onclick="toggleCard('${k}',event)" style="background:none;border:none;color:${p.color};font-size:0.78rem;cursor:pointer;margin-top:12px;font-family:'DM Sans',sans-serif;letter-spacing:0.06em">
+        VOIR PLUS ▾
+      </button>
+    `;
+    grid.appendChild(card);
+  });
+
+  // Auto-add to compare
+  addToCompare('Moi', pct);
+}
+
+function toggleCard(k, e) {
+  e.stopPropagation();
+  const el = document.getElementById('exp-' + k);
+  el.classList.toggle('open');
+  e.target.textContent = el.classList.contains('open') ? 'VOIR MOINS ▴' : 'VOIR PLUS ▾';
+}
+
+// ────────────────────────────────────────────────────────────
+// COMPARE
+// ────────────────────────────────────────────────────────────
+function addToCompare(name, pct) {
+  const existing = compareUsers.findIndex(u => u.name === name);
+  const user = {
+    name,
+    scores: {
+      orange: pct.orange||0, jaune: pct.jaune||0, marron: pct.marron||0,
+      rouge: pct.rouge||0, bleu: pct.bleu||0, violet: pct.violet||0
+    }
+  };
+  if (existing >= 0) compareUsers[existing] = user;
+  else compareUsers.push(user);
+}
+
+function addCompareUser() {
+  const name = document.getElementById('cmp-name').value.trim();
+  if (!name) return;
+  const pct = {
+    orange: +document.getElementById('cmp-orange').value || 0,
+    jaune:  +document.getElementById('cmp-jaune').value  || 0,
+    marron: +document.getElementById('cmp-marron').value || 0,
+    rouge:  +document.getElementById('cmp-rouge').value  || 0,
+    bleu:   +document.getElementById('cmp-bleu').value   || 0,
+    violet: +document.getElementById('cmp-violet').value || 0,
+  };
+  addToCompare(name, pct);
+  ['name','orange','jaune','marron','rouge','bleu','violet'].forEach(id => {
+    document.getElementById('cmp-'+id).value = '';
+  });
+  renderCompareUsers();
+}
+
+function removeCompareUser(idx) {
+  compareUsers.splice(idx, 1);
+  renderCompareUsers();
+}
+
+function renderCompareUsers() {
+  const list = document.getElementById('compare-users-list');
+  if (!list) return;
+
+  if (compareUsers.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">◑</div><h3>Aucun profil</h3><p>Fais le test ou ajoute un profil manuellement pour commencer la comparaison.</p><button class="btn-primary" onclick="startTest()">Faire le test →</button></div>`;
+    document.getElementById('compare-chart-section').style.display = 'none';
+    return;
+  }
+
+  list.innerHTML = compareUsers.map((u, i) => {
+    const topKey = Object.entries(u.scores).sort((a,b)=>b[1]-a[1])[0][0];
+    const p = PROFILES[topKey];
+    const maxScore = Math.max(...Object.values(u.scores));
+    const miniBarHtml = ['orange','jaune','marron','rouge','bleu','violet'].map(k => {
+      const h = Math.max(4, Math.round((u.scores[k] / maxScore) * 32));
+      return `<div class="mini-bar" style="height:${h}px;background:${PROFILES[k].color}"></div>`;
+    }).join('');
+    return `
+      <div class="user-entry">
+        <div class="user-avatar" style="background:${p.color}22;color:${p.color}">${u.name[0].toUpperCase()}</div>
+        <div>
+          <div class="user-name">${u.name}</div>
+          <div class="user-primary">${p.emoji} ${p.name} · ${p.archetype}</div>
+        </div>
+        <div class="user-mini-bars">${miniBarHtml}</div>
+        <button onclick="removeCompareUser(${i})" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:8px;font-size:1rem">×</button>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('compare-chart-section').style.display = 'block';
+  renderCompareChart();
+}
+
+function renderCompareChart() {
+  if (compareChartInstance) { compareChartInstance.destroy(); compareChartInstance = null; }
+  const ctx = document.getElementById('compareChart');
+  if (!ctx) return;
+
+  const profileKeys = ['orange','jaune','marron','rouge','bleu','violet'];
+  const labels = profileKeys.map(k => `${PROFILES[k].emoji} ${PROFILES[k].name}`);
+
+  const palette = ['#FF7A35','#F5C518','#2D6BE4','#E63946','#7B2D8B','#8B6F47','#4CAF50','#00BCD4'];
+
+  const datasets = compareUsers.map((u, i) => ({
+    label: u.name,
+    data: profileKeys.map(k => u.scores[k]),
+    backgroundColor: palette[i % palette.length] + '22',
+    borderColor: palette[i % palette.length],
+    borderWidth: 2,
+    pointBackgroundColor: palette[i % palette.length],
+    pointRadius: 5,
+  }));
+
+  compareChartInstance = new Chart(ctx.getContext('2d'), {
+    type: 'radar',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#ccc', font: { size: 11, family: 'DM Sans' } } } },
+      scales: {
+        r: {
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          angleLines: { color: 'rgba(255,255,255,0.06)' },
+          pointLabels: { color: '#ccc', font: { size: 12, family: 'DM Sans' } },
+          ticks: { display: false },
+          suggestedMin: 0, suggestedMax: 35,
+        }
+      }
+    }
+  });
+}
+
+// ────────────────────────────────────────────────────────────
+// COURS
+// ────────────────────────────────────────────────────────────
+function buildCours() {
+  const el = document.getElementById('cours-content');
+  if (el.innerHTML.trim()) return;
+
+  el.innerHTML = Object.entries(PROFILES).map(([k, p]) => `
+    <div class="profile-section">
+      <div class="profile-section-header" onclick="toggleCours('${k}')">
+        <div class="profile-color-pill" style="background:${p.color}"></div>
+        <div>
+          <div class="profile-section-title">${p.emoji} ${p.name}</div>
+          <div class="profile-section-sub">${p.archetype}</div>
+        </div>
+        <div class="profile-section-chevron" id="chev-${k}">▾</div>
+      </div>
+      <div class="profile-section-body" id="body-${k}">
+        <p style="font-size:0.9rem;line-height:1.75;margin-bottom:20px;color:var(--text-muted)">${p.description} ${p.detail}</p>
+        <div class="info-grid">
+          <div class="info-block"><h5>Points forts</h5><p>${p.traits.join(', ')}</p></div>
+          <div class="info-block"><h5>Besoin principal</h5><p>${p.besoin}</p></div>
+          <div class="info-block"><h5>Communication</h5><p>${p.communication}</p></div>
+          <div class="info-block"><h5>En équipe</h5><p>${p.equipe}</p></div>
+          <div class="info-block"><h5>En soirée</h5><p>${p.soiree}</p></div>
+          <div class="info-block"><h5>En stress</h5><p>${p.stress}</p></div>
+        </div>
+        <div style="margin-top:8px">
+          <span class="driver-chip" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44">Driver : ${p.driver}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleCours(k) {
+  const body = document.getElementById('body-' + k);
+  const chev = document.getElementById('chev-' + k);
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+</script>
+</body>
+</html>
